@@ -21,6 +21,11 @@ to a fresh git repo) and drops you into a REPL. Start talking. Everything the
 agent wants to keep must be written into `self/` — sessions are ephemeral and
 nothing else survives.
 
+A verbatim transcript of every session is recorded to `self/sessions/*.json`
+(updated after each turn). This is a flight recorder, not memory: the agent
+never loads it at boot, but you can read it — and the agent may grow tools to
+study its own past.
+
 One seed, many individuals: each directory you plant in grows a different
 agent, diverging based on what it experiences.
 

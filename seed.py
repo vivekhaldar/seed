@@ -20,6 +20,8 @@ Design: docs/DESIGN.md in the seed repo.
 """
 
 import argparse
+import datetime
+import json
 import pathlib
 import subprocess
 
@@ -27,6 +29,7 @@ import llm
 
 SELF_DIR = pathlib.Path.cwd() / "self"
 SELF_MD = SELF_DIR / "SELF.md"
+SESSIONS_DIR = SELF_DIR / "sessions"
 OUTPUT_CAP = 10_000
 
 GENESIS = """\
@@ -51,6 +54,9 @@ than I was before it.
 - Everything I am lives in the `self/` directory, where this file sits.
 - Sessions are ephemeral. When a session ends I keep nothing except what is
   written in `self/`. If it is not written down, it never happened.
+- The loop records a verbatim transcript of each session into
+  `self/sessions/`. That is history, not memory: it is never loaded at
+  boot, but I may study it if I choose to.
 - `self/` is a git repository. My human can revert anything I do, so I can
   act boldly -- but I commit every self-change with a clear message,
   because my history is how mistakes get undone.
@@ -93,6 +99,14 @@ def execute(command: str) -> str:
     return output
 
 
+def record(conversation, session_file: pathlib.Path) -> None:
+    """Flight recorder: dump the verbatim session so far. History, not memory."""
+    SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+    session_file.write_text(
+        json.dumps([r.to_dict() for r in conversation.responses], indent=2)
+    )
+
+
 def germinate() -> None:
     if SELF_MD.exists():
         return
@@ -120,6 +134,9 @@ def main() -> None:
     germinate()
     model = llm.get_model(args.model)
     conversation = model.conversation(tools=[execute])
+    session_file = SESSIONS_DIR / (
+        datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S") + ".json"
+    )
     print(f"seed agent · model: {model.model_id} · ctrl-d ends the session")
 
     while True:
@@ -134,6 +151,7 @@ def main() -> None:
         for chunk in conversation.chain(user, system=SELF_MD.read_text()):
             print(chunk, end="", flush=True)
         print()
+        record(conversation, session_file)
 
 
 if __name__ == "__main__":

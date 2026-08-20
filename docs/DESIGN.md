@@ -130,6 +130,15 @@ discards the conversation. Nothing survives except what the agent wrote into
 contract honest — `SELF.md` is genuinely the only thing the agent knows at
 wake-up.
 
+**A flight recorder, not a memory.** The loop dumps a verbatim transcript of
+each session to `self/sessions/<timestamp>.json` (rewritten after every
+turn, so crashes lose nothing), using the documented `response.to_dict()`
+API. This does not weaken the fresh-sessions contract: transcripts are never
+loaded at boot. They exist as history — for the human, like git history, and
+for the agent if it ever chooses to grow tools that study its own past.
+(Note: the `llm` library's SQLite logging is CLI-only; the Python API does
+not log, which is why the seed records transcripts itself.)
+
 **No prescribed memory or tool structure.** The genesis text carries
 *imperatives* (reuse before reasoning; reify; grow; be honest) but no
 mechanisms — no `tools/` directory, no memory format, no personality, no
