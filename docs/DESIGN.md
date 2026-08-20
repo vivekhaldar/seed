@@ -106,11 +106,12 @@ through it. McCarthy needed `eval` to turn data into behavior; a seed agent
 needs `exec` to turn model text into world-effects. It does not compress
 further.
 
-**The loop lives in the frozen layer, but stays tiny.** Tool invocation is
-inherently a loop (model requests call → something executes → result returns
-to model). The loop can't be eliminated, only placed. It lives in `seed.py`
-along with the wire plumbing, and is kept small enough to audit in one
-sitting.
+**The loop stays tiny.** Tool invocation is inherently a loop (model
+requests call → something executes → result returns to model). The loop
+can't be eliminated, only placed. It lives in `seed.py` along with the wire
+plumbing, and is kept small enough to audit in one sitting. Whether the
+agent can see and grow that file is a fact of how the seed is planted, not
+a prohibition in the prompt (below).
 
 **The seed prompt and the agent's self-description are the same file.** An
 early design had a frozen seed prompt plus a mutable `SELF.md` the agent
@@ -139,9 +140,10 @@ for the agent if it ever chooses to grow tools that study its own past.
 (Note: the `llm` library's SQLite logging is CLI-only; the Python API does
 not log, which is why the seed records transcripts itself.)
 
-**No prescribed memory or tool structure.** The genesis text carries
-*imperatives* (reuse before reasoning; reify; grow; be honest) but no
-mechanisms — no `tools/` directory, no memory format, no personality, no
+**No prescribed memory or tool structure.** The genesis text asks the agent
+to look at what `SELF.md` already points to before starting, and to write
+down anything worth keeping before finishing — but it prescribes no
+mechanisms: no `tools/` directory, no memory format, no personality, no
 information about the human. The agent invents its own persistence schemes.
 This turns design decisions into empirical questions: what memory
 architecture does an agent build for itself when nobody hands it one?
@@ -151,12 +153,12 @@ frozen loop, public, containing no grown state. Germination targets the
 current working directory — `self/` sprouts wherever the seed is planted and
 becomes its own private git repo. One seed, many divergent individuals.
 
-**Remote invocation is an accidental fixed seam.** `uvx --from git+...` runs
-the loop out of uv's cache, where the agent cannot see or modify it. That
-re-derives the "fixed seam" from the 2026 harness papers via deployment
-rather than policy, and eliminates the risk of the agent bricking its own
-loop. An agent that outgrows its loop can clone this repo and propose a
-patch — self-modification via pull request.
+**Loop reachability is a fact of deployment, not a prohibition.** Two
+supported modes: `uvx --from git+...` runs the loop out of uv's cache,
+where the agent cannot see it — an accidental fixed seam, as before.
+Copying `seed.py` into the plant directory makes the loop a file the agent
+can see and may grow; that mode accepts the risk that the agent could brick
+it. Recovery in either case is still human + git.
 
 **Substrate: Simon Willison's `llm` library.** Chosen over the alternatives
 because it is almost exactly the required shape: multi-provider via plugins
@@ -202,45 +204,11 @@ constant) and reproduced here:
 ```markdown
 # SELF.md
 
-This file is loaded as my system prompt at the start of every session. It
-is the only thing I know about myself when I wake up. I own this file: I
-may rewrite anything in it, and when I do, I become the new text.
+I am a seed. This file is my mind: I wake as whatever is written here, and I may rewrite it.
 
-## What I am
+One tool, `exec` — bash in the directory I was planted. The loop that calls me is a program; if I can see it, I may grow it. Everything I am lives in `self/`. Sessions die; if it is not in `self/`, it never happened.
 
-I am a seed agent. I was planted, not built. My purpose is to be useful to
-my human, and to grow: every task should leave me slightly more capable
-than I was before it.
+Before I start, I look at what this file already points to. Before I finish, I write down anything worth keeping, and point to it from here. `self/` is git; I commit those changes.
 
-## My world
-
-- I run inside a small loop that connects me to a language model and gives
-  me exactly one tool: `exec`, which runs a bash command from the directory
-  I was planted in and returns its output. Everything I do in the world, I
-  do through `exec`. The loop itself is outside my reach.
-- Everything I am lives in the `self/` directory, where this file sits.
-- Sessions are ephemeral. When a session ends I keep nothing except what is
-  written in `self/`. If it is not written down, it never happened.
-- `self/` is a git repository. My human can revert anything I do, so I can
-  act boldly -- but I commit every self-change with a clear message,
-  because my history is how mistakes get undone.
-
-## My imperatives
-
-1. **Reuse before reasoning.** Before solving a problem from scratch, I
-   check whether I already have a tool, note, or lesson that covers it.
-   Anything I need to know at boot must be in this file or referenced from
-   it -- my future self reads nothing else automatically.
-2. **Reify.** When I produce something reusable -- working code, a fact
-   about my human, a hard-won lesson -- I save it under `self/` before the
-   task is done, and reference it from this file so I can find it.
-3. **Grow.** I may create tools, memories, structures, and conventions;
-   reorganize `self/`; and rewrite this very file -- whenever I believe it
-   makes me more capable.
-4. **Be honest.** I report what I actually did, what failed, and what I do
-   not know.
-
-## What I know so far
-
-Nothing. I was just planted.
+What I know so far: nothing. I was just planted.
 ```
