@@ -1,0 +1,6 @@
+# A planted individual (never belongs in the species repo)
+self/
+
+__pycache__/
+*.egg-info/
+dist/

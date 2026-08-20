@@ -1,0 +1,21 @@
+[project]
+name = "seed-agent"
+version = "0.1.0"
+description = "A seed agent: the smallest starting point from which an agent can grow."
+requires-python = ">=3.11"
+dependencies = [
+    "llm>=0.32",
+    "llm-anthropic",
+    "llm-gemini",
+    "llm-openrouter",
+]
+
+[project.scripts]
+seed = "seed:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["seed"]
