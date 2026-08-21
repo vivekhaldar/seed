@@ -2,12 +2,9 @@
 
 A seed agent: the smallest starting point from which an agent can grow.
 
-There is no framework here. The entire frozen layer is [`seed.py`](seed.py) —
-a small loop that connects a language model to exactly one tool (`exec`, which
-runs bash) and loads its system prompt from a file the agent itself owns and
-may rewrite. Everything an agent normally gets from a framework — tools,
-memory, skills, conventions — must instead be *grown* by the agent, session by
-session, into its `self/` directory.
+[`seed.py`](seed.py) calls a language model with one tool: `exec`, which runs
+shell commands. It loads the system prompt from `self/SELF.md`. The agent can
+edit `self/` to retain tools, notes, and behavior between sessions.
 
 ## Plant one
 
