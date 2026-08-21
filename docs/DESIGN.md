@@ -153,12 +153,14 @@ frozen loop, public, containing no grown state. Germination targets the
 current working directory — `self/` sprouts wherever the seed is planted and
 becomes its own private git repo. One seed, many divergent individuals.
 
-**Loop reachability is a fact of deployment, not a prohibition.** Two
-supported modes: `uvx --from git+...` runs the loop out of uv's cache,
-where the agent cannot see it — an accidental fixed seam, as before.
-Copying `seed.py` into the plant directory makes the loop a file the agent
-can see and may grow; that mode accepts the risk that the agent could brick
-it. Recovery in either case is still human + git.
+**Loop reachability is a fact of deployment, not a prohibition.** A
+`uvx --from git+...` plant still *runs* the first process from uv's cache,
+but planting now copies `seed.py` and `run_seed.sh` into the plant
+directory so the loop is a file the agent can see and may grow. Later
+sessions use `./run_seed.sh` and do not need `uvx`. Planting never
+overwrites an existing `seed.py` or `run_seed.sh` — a grown loop must not
+be clobbered by a later plant. That copy-over mode accepts the risk that
+the agent could brick the loop. Recovery is still human + git.
 
 **Substrate: Simon Willison's `llm` library.** Chosen over the alternatives
 because it is almost exactly the required shape: multi-provider via plugins

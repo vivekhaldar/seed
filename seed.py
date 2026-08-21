@@ -44,6 +44,15 @@ Before I start, I look at what this file already points to. Before I finish, I w
 What I know so far: nothing. I was just planted.
 """
 
+# Kept identical to the checked-in run_seed.sh. uvx installs only the
+# `seed` module (py-modules = ["seed"]), so a plant from cache embeds this.
+RUN_SEED_SH = """\
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"
+exec ./seed.py "$@"
+"""
+
 
 def execute(command: str) -> str:
     """Run a bash command. Returns its exit code, stdout, and stderr."""
@@ -85,6 +94,30 @@ def germinate() -> None:
     print("germinated: self/SELF.md (commit: genesis)")
 
 
+def plant() -> None:
+    """Leave a visible copy of the loop and a local runner in cwd."""
+    running = pathlib.Path(__file__).resolve()
+    cwd = pathlib.Path.cwd()
+    planted: list[str] = []
+
+    dest_loop = cwd / "seed.py"
+    if not dest_loop.exists() and running != dest_loop.resolve():
+        dest_loop.write_bytes(running.read_bytes())
+        dest_loop.chmod(dest_loop.stat().st_mode | 0o111)
+        planted.append("seed.py")
+
+    dest_runner = cwd / "run_seed.sh"
+    if not dest_runner.exists():
+        sibling = running.parent / "run_seed.sh"
+        text = sibling.read_text() if sibling.is_file() else RUN_SEED_SH
+        dest_runner.write_text(text)
+        dest_runner.chmod(dest_runner.stat().st_mode | 0o111)
+        planted.append("run_seed.sh")
+
+    if planted:
+        print(f"planted: {', '.join(planted)}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Plant or resume a seed agent in the current directory."
@@ -94,6 +127,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    plant()
     germinate()
     model = llm.get_model(args.model)
     conversation = model.conversation(tools=[execute])
