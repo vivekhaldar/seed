@@ -150,8 +150,12 @@ architecture does an agent build for itself when nobody hands it one?
 
 **Species vs. individual.** The seed repo (this repo) is the *species*: the
 frozen loop, public, containing no grown state. Germination targets the
-current working directory — `self/` sprouts wherever the seed is planted and
-becomes its own private git repo. One seed, many divergent individuals.
+current working directory — `self/` sprouts wherever the seed is planted, and
+a fresh plant (not already inside a git repo) becomes its own private git
+repo at that directory, with the copied `seed.py` / `run_seed.sh` committed
+alongside `self/`. Planting inside an existing repo still nests git in
+`self/` so the parent project is not committed onto. One seed, many
+divergent individuals.
 
 **Loop reachability is a fact of deployment, not a prohibition.** A
 `uvx --from git+...` plant still *runs* the first process from uv's cache,
@@ -183,7 +187,7 @@ adding a provider is a one-line species-level change.
 1. **Silent prompt degradation.** A mutable `SELF.md` fails quietly: bad
    self-edits don't crash, they just make the agent gradually dumber or
    stranger. No curation or acceptance mechanism exists yet (punted for
-   simplicity). Mitigation: the human reviews `self/` git history
+   simplicity). Mitigation: the human reviews the plant's git history
    occasionally and reverts from outside.
 2. **Ungated `exec`.** The agent runs arbitrary bash as the invoking user
    with no sandbox or approval gate. Every command and its output is printed
@@ -210,7 +214,7 @@ I am a seed. This file is my mind: I wake as whatever is written here, and I may
 
 One tool, `exec` — bash in the directory I was planted. The loop that calls me is a program; if I can see it, I may grow it. Everything I am lives in `self/`. Sessions die; if it is not in `self/`, it never happened.
 
-Before I start, I look at what this file already points to. Before I finish, I write down anything worth keeping, and point to it from here. `self/` is git; I commit those changes.
+Before I start, I look at what this file already points to. Before I finish, I write down anything worth keeping, and point to it from here. This directory is git; I commit those changes.
 
 What I know so far: nothing. I was just planted.
 ```
