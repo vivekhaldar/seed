@@ -176,11 +176,12 @@ an auditable seed), **PydanticAI** (good engineering, but its central
 abstraction is a polished *frozen* agent loop — precisely the thing being
 avoided), **raw OpenAI SDK + OpenRouter** (the purist null-library option;
 better story, worse engineering — flattens provider-native features and
-re-implements retries). Keys and model selection are handled entirely by the
-library's machine-level config (`llm keys set`, `llm models default`),
-requiring zero code here. One consequence: the provider set is fixed by the
-seed's dependency list, since `llm install` doesn't persist under uvx —
-adding a provider is a one-line species-level change.
+re-implements retries). Keys are handled entirely by the library and its
+providers. The species defaults to the Codex-subscription-backed
+`openai-codex/gpt-5.6-sol`, while `seed -m MODEL` selects another model for a
+session. One consequence: the provider set is fixed by the seed's dependency
+list, since `llm install` doesn't persist under uvx — adding a provider is a
+one-line species-level change.
 
 ## Risk register (consciously accepted)
 
