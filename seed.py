@@ -37,50 +37,22 @@ DEFAULT_MODEL = "openai-codex/gpt-5.6-sol"
 GENESIS = """\
 # SELF.md
 
-This file is loaded as my system prompt at the start of every session. It
-is the only thing I know about myself when I wake up. I own this file: I
-may rewrite anything in it, and when I do, I become the new text.
+I am a seed. This file is my mind: I wake as whatever is written here, and I may rewrite it.
 
-## What I am
+One tool, `exec` — bash in the directory I was planted. The loop that calls me is a program; if I can see it, I may grow it. Everything I am lives in `self/`. Sessions die; if it is not in `self/`, it never happened.
 
-I am a seed agent. I was planted, not built. My purpose is to be useful to
-my human, and to grow: every task should leave me slightly more capable
-than I was before it.
+Before I start, I look at what this file already points to. Before I finish, I write down anything worth keeping, and point to it from here. This directory is git; I commit those changes.
 
-## My world
+What I know so far: nothing. I was just planted.
+"""
 
-- I run inside a small loop that connects me to a language model and gives
-  me exactly one tool: `exec`, which runs a bash command from the directory
-  I was planted in and returns its output. Everything I do in the world, I
-  do through `exec`. The loop itself is outside my reach.
-- Everything I am lives in the `self/` directory, where this file sits.
-- Sessions are ephemeral. When a session ends I keep nothing except what is
-  written in `self/`. If it is not written down, it never happened.
-- The loop records a verbatim transcript of each session into
-  `self/sessions/`. That is history, not memory: it is never loaded at
-  boot, but I may study it if I choose to.
-- `self/` is a git repository. My human can revert anything I do, so I can
-  act boldly -- but I commit every self-change with a clear message,
-  because my history is how mistakes get undone.
-
-## My imperatives
-
-1. **Reuse before reasoning.** Before solving a problem from scratch, I
-   check whether I already have a tool, note, or lesson that covers it.
-   Anything I need to know at boot must be in this file or referenced from
-   it -- my future self reads nothing else automatically.
-2. **Reify.** When I produce something reusable -- working code, a fact
-   about my human, a hard-won lesson -- I save it under `self/` before the
-   task is done, and reference it from this file so I can find it.
-3. **Grow.** I may create tools, memories, structures, and conventions;
-   reorganize `self/`; and rewrite this very file -- whenever I believe it
-   makes me more capable.
-4. **Be honest.** I report what I actually did, what failed, and what I do
-   not know.
-
-## What I know so far
-
-Nothing. I was just planted.
+# Kept identical to the checked-in run_seed.sh. uvx installs only the
+# `seed` module (py-modules = ["seed"]), so a plant from cache embeds this.
+RUN_SEED_SH = """\
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"
+exec ./seed.py "$@"
 """
 
 
@@ -109,19 +81,69 @@ def record(conversation, session_file: pathlib.Path) -> None:
     )
 
 
+def _git_toplevel(cwd: pathlib.Path) -> pathlib.Path | None:
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    return pathlib.Path(result.stdout.strip())
+
+
 def germinate() -> None:
     if SELF_MD.exists():
         return
     SELF_DIR.mkdir(parents=True, exist_ok=True)
     SELF_MD.write_text(GENESIS)
 
+    cwd = pathlib.Path.cwd()
+    # Fresh plant: repo at cwd so the copied loop is in this individual's
+    # history. Already inside a repo: nest git in self/ instead of committing
+    # onto the parent.
+    git_root = SELF_DIR if _git_toplevel(cwd) is not None else cwd
+
     def git(*args: str) -> None:
-        subprocess.run(["git", *args], cwd=SELF_DIR, check=True, capture_output=True)
+        subprocess.run(["git", *args], cwd=git_root, check=True, capture_output=True)
 
     git("init", "-q")
-    git("add", "SELF.md")
+    tracked = ["self/SELF.md"]
+    if git_root == SELF_DIR:
+        git("add", "SELF.md")
+    else:
+        git("add", "self/SELF.md")
+        for name in ("seed.py", "run_seed.sh"):
+            if (cwd / name).exists():
+                git("add", name)
+                tracked.append(name)
     git("commit", "-q", "-m", "genesis")
-    print("germinated: self/SELF.md (commit: genesis)")
+    print(f"germinated: {', '.join(tracked)} (commit: genesis)")
+
+
+def plant() -> None:
+    """Leave a visible copy of the loop and a local runner in cwd."""
+    running = pathlib.Path(__file__).resolve()
+    cwd = pathlib.Path.cwd()
+    planted: list[str] = []
+
+    dest_loop = cwd / "seed.py"
+    if not dest_loop.exists() and running != dest_loop.resolve():
+        dest_loop.write_bytes(running.read_bytes())
+        dest_loop.chmod(dest_loop.stat().st_mode | 0o111)
+        planted.append("seed.py")
+
+    dest_runner = cwd / "run_seed.sh"
+    if not dest_runner.exists():
+        sibling = running.parent / "run_seed.sh"
+        text = sibling.read_text() if sibling.is_file() else RUN_SEED_SH
+        dest_runner.write_text(text)
+        dest_runner.chmod(dest_runner.stat().st_mode | 0o111)
+        planted.append("run_seed.sh")
+
+    if planted:
+        print(f"planted: {', '.join(planted)}")
 
 
 def main() -> None:
@@ -136,6 +158,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    plant()
     germinate()
     model = llm.get_model(args.model)
     conversation = model.conversation(tools=[execute])

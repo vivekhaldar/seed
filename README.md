@@ -16,10 +16,19 @@ mkdir my-agent && cd my-agent
 uvx --from git+https://github.com/vivekhaldar/seed.git seed
 ```
 
-First run germinates `self/SELF.md` (the genesis self-description, committed
-to a fresh git repo) and drops you into a REPL. Start talking. Everything the
-agent wants to keep must be written into `self/` — sessions are ephemeral and
-nothing else survives.
+First run copies `seed.py` and `run_seed.sh` into this directory (never
+overwriting a file that already exists), germinates `self/SELF.md`, and
+commits those files together in a fresh git repo here — the loop is part of
+this individual's history, not only `self/`. Then it drops you into a REPL.
+Start talking. Everything the agent wants to keep must be written into
+`self/` — sessions are ephemeral and nothing else survives.
+
+Come back to the same agent with the local runner — no need to `uvx` again:
+
+```bash
+./run_seed.sh
+./run_seed.sh -m gemini-2.5-pro
+```
 
 A verbatim transcript of every session is recorded to `self/sessions/*.json`
 (updated after each turn). This is a flight recorder, not memory: the agent
@@ -36,9 +45,9 @@ Models and keys are handled entirely by [llm](https://llm.datasette.io/)
 which uses the ChatGPT login from the Codex CLI:
 
 ```bash
-codex login                    # one-time, per machine
-seed                           # uses openai-codex/gpt-5.6-sol
-seed -m gemini-2.5-pro         # or override it for one session
+codex login                      # one-time, per machine
+./run_seed.sh                    # uses openai-codex/gpt-5.6-sol
+./run_seed.sh -m gemini-2.5-pro  # or override it for one session
 ```
 
 Bundled providers: OpenAI via a Codex subscription or API key, Anthropic,
