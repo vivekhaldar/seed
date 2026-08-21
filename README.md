@@ -6,6 +6,10 @@ A seed agent: the smallest starting point from which an agent can grow.
 shell commands. It loads the system prompt from `self/SELF.md`. The agent can
 edit `self/` to retain tools, notes, and behavior between sessions.
 
+Everything an agent normally gets from a framework — tools, memory, skills,
+conventions — must instead be *grown* by the agent, session by session, into
+its `self/` directory.
+
 ## Plant one
 
 ```bash
