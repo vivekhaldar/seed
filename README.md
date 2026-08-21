@@ -17,10 +17,11 @@ uvx --from git+https://github.com/vivekhaldar/seed.git seed
 ```
 
 First run copies `seed.py` and `run_seed.sh` into this directory (never
-overwriting a file that already exists), germinates `self/SELF.md` (the
-genesis self-description, committed to a fresh git repo), and drops you into
-a REPL. Start talking. Everything the agent wants to keep must be written
-into `self/` — sessions are ephemeral and nothing else survives.
+overwriting a file that already exists), germinates `self/SELF.md`, and
+commits those files together in a fresh git repo here — the loop is part of
+this individual's history, not only `self/`. Then it drops you into a REPL.
+Start talking. Everything the agent wants to keep must be written into
+`self/` — sessions are ephemeral and nothing else survives.
 
 Come back to the same agent with the local runner — no need to `uvx` again:
 

@@ -39,7 +39,7 @@ I am a seed. This file is my mind: I wake as whatever is written here, and I may
 
 One tool, `exec` — bash in the directory I was planted. The loop that calls me is a program; if I can see it, I may grow it. Everything I am lives in `self/`. Sessions die; if it is not in `self/`, it never happened.
 
-Before I start, I look at what this file already points to. Before I finish, I write down anything worth keeping, and point to it from here. `self/` is git; I commit those changes.
+Before I start, I look at what this file already points to. Before I finish, I write down anything worth keeping, and point to it from here. This directory is git; I commit those changes.
 
 What I know so far: nothing. I was just planted.
 """
@@ -79,19 +79,45 @@ def record(conversation, session_file: pathlib.Path) -> None:
     )
 
 
+def _git_toplevel(cwd: pathlib.Path) -> pathlib.Path | None:
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    return pathlib.Path(result.stdout.strip())
+
+
 def germinate() -> None:
     if SELF_MD.exists():
         return
     SELF_DIR.mkdir(parents=True, exist_ok=True)
     SELF_MD.write_text(GENESIS)
 
+    cwd = pathlib.Path.cwd()
+    # Fresh plant: repo at cwd so the copied loop is in this individual's
+    # history. Already inside a repo: nest git in self/ instead of committing
+    # onto the parent.
+    git_root = SELF_DIR if _git_toplevel(cwd) is not None else cwd
+
     def git(*args: str) -> None:
-        subprocess.run(["git", *args], cwd=SELF_DIR, check=True, capture_output=True)
+        subprocess.run(["git", *args], cwd=git_root, check=True, capture_output=True)
 
     git("init", "-q")
-    git("add", "SELF.md")
+    tracked = ["self/SELF.md"]
+    if git_root == SELF_DIR:
+        git("add", "SELF.md")
+    else:
+        git("add", "self/SELF.md")
+        for name in ("seed.py", "run_seed.sh"):
+            if (cwd / name).exists():
+                git("add", name)
+                tracked.append(name)
     git("commit", "-q", "-m", "genesis")
-    print("germinated: self/SELF.md (commit: genesis)")
+    print(f"germinated: {', '.join(tracked)} (commit: genesis)")
 
 
 def plant() -> None:
