@@ -16,10 +16,18 @@ mkdir my-agent && cd my-agent
 uvx --from git+https://github.com/vivekhaldar/seed.git seed
 ```
 
-First run germinates `self/SELF.md` (the genesis self-description, committed
-to a fresh git repo) and drops you into a REPL. Start talking. Everything the
-agent wants to keep must be written into `self/` — sessions are ephemeral and
-nothing else survives.
+First run copies `seed.py` and `run_seed.sh` into this directory (never
+overwriting a file that already exists), germinates `self/SELF.md` (the
+genesis self-description, committed to a fresh git repo), and drops you into
+a REPL. Start talking. Everything the agent wants to keep must be written
+into `self/` — sessions are ephemeral and nothing else survives.
+
+Come back to the same agent with the local runner — no need to `uvx` again:
+
+```bash
+./run_seed.sh
+./run_seed.sh -m gemini-2.5-pro
+```
 
 A verbatim transcript of every session is recorded to `self/sessions/*.json`
 (updated after each turn). This is a flight recorder, not memory: the agent
@@ -37,7 +45,7 @@ Models and keys are handled entirely by [llm](https://llm.datasette.io/)
 ```bash
 uvx llm keys set openai        # one-time, per machine
 uvx llm models default gpt-5.2 # optional: set a default model
-seed -m gemini-2.5-pro         # or pick a model per session
+./run_seed.sh -m gemini-2.5-pro  # or pick a model per session
 ```
 
 Bundled providers: OpenAI, Anthropic, Gemini, OpenRouter (one OpenRouter key
