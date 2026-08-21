@@ -5,6 +5,7 @@
 #     "llm>=0.32",
 #     "llm-anthropic",
 #     "llm-gemini",
+#     "llm-openai-via-codex",
 #     "llm-openrouter",
 # ]
 # ///
@@ -31,6 +32,7 @@ SELF_DIR = pathlib.Path.cwd() / "self"
 SELF_MD = SELF_DIR / "SELF.md"
 SESSIONS_DIR = SELF_DIR / "sessions"
 OUTPUT_CAP = 10_000
+DEFAULT_MODEL = "openai-codex/gpt-5.6-sol"
 
 GENESIS = """\
 # SELF.md
@@ -127,7 +129,10 @@ def main() -> None:
         description="Plant or resume a seed agent in the current directory."
     )
     parser.add_argument(
-        "-m", "--model", help="llm model id (default: `llm models default`)"
+        "-m",
+        "--model",
+        default=DEFAULT_MODEL,
+        help=f"llm model id (default: {DEFAULT_MODEL})",
     )
     args = parser.parse_args()
 

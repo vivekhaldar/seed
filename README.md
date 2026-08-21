@@ -32,16 +32,17 @@ agent, diverging based on what it experiences.
 ## Configuration
 
 Models and keys are handled entirely by [llm](https://llm.datasette.io/)
-(Simon Willison's library), which stores keys machine-wide:
+(Simon Willison's library). The default model is `openai-codex/gpt-5.6-sol`,
+which uses the ChatGPT login from the Codex CLI:
 
 ```bash
-uvx llm keys set openai        # one-time, per machine
-uvx llm models default gpt-5.2 # optional: set a default model
-seed -m gemini-2.5-pro         # or pick a model per session
+codex login                    # one-time, per machine
+seed                           # uses openai-codex/gpt-5.6-sol
+seed -m gemini-2.5-pro         # or override it for one session
 ```
 
-Bundled providers: OpenAI, Anthropic, Gemini, OpenRouter (one OpenRouter key
-unlocks hundreds of models).
+Bundled providers: OpenAI via a Codex subscription or API key, Anthropic,
+Gemini, and OpenRouter (one OpenRouter key unlocks hundreds of models).
 
 ## Design
 
