@@ -2,6 +2,8 @@
 name = "seed-agent"
 version = "0.1.0"
 description = "A seed agent: the smallest starting point from which an agent can grow."
+license = "LicenseRef-Sovereign-Source-License-0.3"
+license-files = ["SovereignLicense.md"]
 requires-python = ">=3.11"
 dependencies = [
     "llm>=0.32",
@@ -15,7 +17,7 @@ dependencies = [
 seed = "seed:main"
 
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]

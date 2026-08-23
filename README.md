@@ -58,3 +58,9 @@ Gemini, and OpenRouter (one OpenRouter key unlocks hundreds of models).
 
 Why it's shaped this way — McCarthy's metacircular eval, homoiconicity, the
 prior art, and the risks we consciously accepted: [docs/DESIGN.md](docs/DESIGN.md).
+
+## License
+
+Seed is licensed under the [Sovereign Source License (SSL) v0.3](SovereignLicense.md).
+The canonical license project is maintained by
+[Smart Assets](https://gitlab.com/smart-assets.io/SovereignLicense).
