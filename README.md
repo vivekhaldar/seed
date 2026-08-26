@@ -2,6 +2,8 @@
 
 A seed agent: the smallest starting point from which an agent can grow.
 
+[![Watch the video](https://img.youtube.com/vi/3xwpkR5vgBo/maxresdefault.jpg)](https://www.youtube.com/watch?v=3xwpkR5vgBo)
+
 [`seed.py`](seed.py) calls a language model with one tool: `exec`, which runs
 shell commands. It loads the system prompt from `self/SELF.md`. The agent can
 edit `self/` to retain tools, notes, and behavior between sessions.
