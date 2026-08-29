@@ -46,8 +46,9 @@ Before I start, I look at what this file already points to. Before I finish, I w
 What I know so far: nothing. I was just planted.
 """
 
-# Kept identical to the checked-in run_seed.sh. uvx installs only the
-# `seed` module (py-modules = ["seed"]), so a plant from cache embeds this.
+# Minimal fallback runner: uvx installs only the `seed` module
+# (py-modules = ["seed"]), so a plant from cache embeds this. The
+# checked-in run_seed.sh additionally bootstraps models and keys.
 RUN_SEED_SH = """\
 #!/usr/bin/env bash
 set -euo pipefail

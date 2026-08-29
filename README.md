@@ -14,22 +14,29 @@ its `self/` directory.
 
 ```bash
 mkdir my-agent && cd my-agent
-uvx --from git+https://github.com/vivekhaldar/seed.git seed
+curl -fsSL https://raw.githubusercontent.com/vivekhaldar/seed/master/run_seed.sh | bash
 ```
 
-First run copies `seed.py` and `run_seed.sh` into this directory (never
-overwriting a file that already exists), germinates `self/SELF.md`, and
-commits those files together in a fresh git repo here — the loop is part of
-this individual's history, not only `self/`. Then it drops you into a REPL.
-Start talking. Everything the agent wants to keep must be written into
-`self/` — sessions are ephemeral and nothing else survives.
+The runner finds your model credentials — or, on a machine with none, asks
+you to pick a provider and paste an API key, which is verified before it's
+stored. Then the first run copies `seed.py` and `run_seed.sh` into this
+directory (never overwriting a file that already exists), germinates
+`self/SELF.md`, and commits those files together in a fresh git repo here —
+the loop is part of this individual's history, not only `self/`. Then it
+drops you into a REPL. Start talking. Everything the agent wants to keep
+must be written into `self/` — sessions are ephemeral and nothing else
+survives.
 
-Come back to the same agent with the local runner — no need to `uvx` again:
+Come back to the same agent with the local runner — no need to curl again:
 
 ```bash
 ./run_seed.sh
-./run_seed.sh -m gemini-2.5-pro
+./run_seed.sh -m gemini/gemini-3.7-flash
 ```
+
+(If you already have credentials configured,
+`uvx --from git+https://github.com/vivekhaldar/seed.git seed` still works;
+it plants a minimal runner without the model/key bootstrap.)
 
 A verbatim transcript of every session is recorded to `self/sessions/*.json`
 (updated after each turn). This is a flight recorder, not memory: the agent
@@ -41,15 +48,23 @@ agent, diverging based on what it experiences.
 
 ## Configuration
 
-Models and keys are handled entirely by [llm](https://llm.datasette.io/)
-(Simon Willison's library). The default model is `openai-codex/gpt-5.6-sol`,
-which uses the ChatGPT login from the Codex CLI:
+Models and keys are handled by [llm](https://llm.datasette.io/) (Simon
+Willison's library); `run_seed.sh` decides which model a session uses. On a
+machine with no credentials at all, the first run asks you to pick a provider
+and paste an API key — the key is checked with a one-word prompt, stored in
+`llm`'s key store, and the model choice is saved to `self/model`. After that,
+starting the agent asks nothing.
 
-```bash
-codex login                      # one-time, per machine
-./run_seed.sh                    # uses openai-codex/gpt-5.6-sol
-./run_seed.sh -m gemini-2.5-pro  # or override it for one session
-```
+Resolution order:
+
+1. `-m` flag — one session: `./run_seed.sh -m gemini/gemini-3.7-flash`
+2. `SEED_MODEL` env var — one session, handy for containers
+3. `self/model` — this individual's saved choice; edit or delete it to change
+4. found credentials — a Codex CLI login (`codex login`, uses
+   `openai-codex/gpt-5.6-sol`), or a provider key from the environment
+   (`OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`,
+   `OPENAI_API_KEY`) or from `llm keys set <provider>`
+5. none of the above — the first-run picker
 
 Bundled providers: OpenAI via a Codex subscription or API key, Anthropic,
 Gemini, and OpenRouter (one OpenRouter key unlocks hundreds of models).
