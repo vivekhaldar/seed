@@ -148,6 +148,15 @@ information about the human. The agent invents its own persistence schemes.
 This turns design decisions into empirical questions: what memory
 architecture does an agent build for itself when nobody hands it one?
 
+**Onboarding is outside the kernel.** `try.sh` is a curl|bash wrapper that
+picks a provider, stores an API key in llm's existing `keys.json`, writes
+`.seed-model`, plants the loop files, and only then execs `seed.py -m`.
+That keeps key ingestion and model choice out of the frozen ~150-line
+loop — the script is species-level packaging, not part of the agent's
+mind. `run_seed.sh` reads `.seed-model` so return visits do not fall
+back to the Codex default. Piped installs read prompts from `/dev/tty`
+because stdin is the script itself.
+
 **Species vs. individual.** The seed repo (this repo) is the *species*: the
 frozen loop, public, containing no grown state. Germination targets the
 current working directory — `self/` sprouts wherever the seed is planted, and

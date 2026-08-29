@@ -1,5 +1,7 @@
 # A planted individual (never belongs in the species repo)
 self/
+.seed-model
+.venv/
 
 __pycache__/
 *.egg-info/
