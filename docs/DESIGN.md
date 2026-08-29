@@ -158,13 +158,16 @@ alongside `self/`. Planting inside an existing repo still nests git in
 divergent individuals.
 
 **Loop reachability is a fact of deployment, not a prohibition.** A
-`uvx --from git+...` plant still *runs* the first process from uv's cache,
-but planting now copies `seed.py` and `run_seed.sh` into the plant
-directory so the loop is a file the agent can see and may grow. Later
-sessions use `./run_seed.sh` and do not need `uvx`. Planting never
-overwrites an existing `seed.py` or `run_seed.sh` — a grown loop must not
-be clobbered by a later plant. That copy-over mode accepts the risk that
-the agent could brick the loop. Recovery is still human + git.
+`curl | bash` setup selects a provider and model before invoking the seed,
+then writes that model (but no credential) into `run_seed.sh`. The first
+seed process still runs from uv's cache, but planting copies `seed.py` into
+the plant directory, alongside the configured runner, so the loop is a file
+the agent can see and may grow. Later sessions use `./run_seed.sh` and do not
+need `uvx`. Planting never overwrites an existing `seed.py` or `run_seed.sh`
+— a grown loop must not be clobbered by a later plant. That copy-over mode
+accepts the risk that the agent could brick the loop. Recovery is still
+human + git. Direct `uvx --from git+... seed -m MODEL` planting remains
+available for already-configured environments.
 
 **Substrate: Simon Willison's `llm` library.** Chosen over the alternatives
 because it is almost exactly the required shape: multi-provider via plugins
@@ -177,11 +180,13 @@ abstraction is a polished *frozen* agent loop — precisely the thing being
 avoided), **raw OpenAI SDK + OpenRouter** (the purist null-library option;
 better story, worse engineering — flattens provider-native features and
 re-implements retries). Keys are handled entirely by the library and its
-providers. The species defaults to the Codex-subscription-backed
-`openai-codex/gpt-5.6-sol`, while `seed -m MODEL` selects another model for a
-session. One consequence: the provider set is fixed by the seed's dependency
-list, since `llm install` doesn't persist under uvx — adding a provider is a
-one-line species-level change.
+providers. The setup stores keys in `llm`'s user-level key store and puts
+only the selected model in the individual's runner. The bare Python entry
+point retains the Codex-subscription-backed
+`openai-codex/gpt-5.6-sol` default, while `seed -m MODEL` selects another
+model for a session. One consequence: the provider set is fixed by the
+seed's dependency list, since `llm install` doesn't persist under uvx —
+adding a provider is a one-line species-level change.
 
 ## Risk register (consciously accepted)
 
