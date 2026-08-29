@@ -54,6 +54,43 @@ codex login                      # one-time, per machine
 Bundled providers: OpenAI via a Codex subscription or API key, Anthropic,
 Gemini, and OpenRouter (one OpenRouter key unlocks hundreds of models).
 
+## Run in a container
+
+The `exec` tool runs arbitrary shell commands, so a container is a natural
+pot to plant in. Build the image straight from the repo:
+
+```bash
+docker build -t seed https://github.com/vivekhaldar/seed.git
+```
+
+Mount a directory at `/agent` — that is where everything the agent is
+(`seed.py`, `run_seed.sh`, `self/`) lives, so the individual survives the
+container. Mounting `~/.codex` reuses your Codex CLI login for the default
+model:
+
+```bash
+mkdir my-agent
+docker run -it --rm \
+  -v "$PWD/my-agent:/agent" \
+  -v ~/.codex:/root/.codex \
+  seed
+```
+
+For other providers, pass an API key as an environment variable and pick a
+model:
+
+```bash
+docker run -it --rm \
+  -v "$PWD/my-agent:/agent" \
+  -e OPENROUTER_API_KEY \
+  seed -m openrouter/moonshotai/kimi-k2
+```
+
+or mount keys you already set with `llm keys set`:
+`-v ~/.config/io.datasette.llm:/root/.config/io.datasette.llm`.
+
+Come back to the same agent by mounting the same directory again.
+
 ## Design
 
 Why it's shaped this way — McCarthy's metacircular eval, homoiconicity, the
