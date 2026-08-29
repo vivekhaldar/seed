@@ -249,7 +249,7 @@ if [[ -n "$KEY_NAME" ]]; then
         printf '\n' >&3
         [[ -n "$NEW_KEY" ]] || die "API key cannot be empty"
         printf -v "$KEY_ENV" '%s' "$NEW_KEY"
-        export "$KEY_ENV"
+        export "${KEY_ENV?}"
     fi
 elif [[ "$PROVIDER" == "codex" ]]; then
     if [[ ! -f "${CODEX_HOME:-$HOME/.codex}/auth.json" ]]; then
@@ -289,15 +289,17 @@ if [[ -n "$NEW_KEY" ]]; then
     printf 'Stored the %s key with llm.\n' "$KEY_NAME"
 fi
 
-{
-    printf '%s\n' '#!/usr/bin/env bash'
-    printf '%s\n' 'set -euo pipefail'
-    printf '%s\n' 'cd "$(dirname "$0")"'
-    printf '%s\n' '[[ -n "${OPENROUTER_API_KEY:-}" && -z "${OPENROUTER_KEY:-}" ]] && export OPENROUTER_KEY="$OPENROUTER_API_KEY"'
-    printf '%s\n' '[[ -n "${GEMINI_API_KEY:-}" && -z "${LLM_GEMINI_KEY:-}" ]] && export LLM_GEMINI_KEY="$GEMINI_API_KEY"'
-    printf 'DEFAULT_MODEL=%q\n' "$MODEL"
-    printf '%s\n' 'exec ./seed.py -m "${SEED_MODEL:-$DEFAULT_MODEL}" "$@"'
-} >run_seed.sh
+cat >run_seed.sh <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"
+[[ -n "${OPENROUTER_API_KEY:-}" && -z "${OPENROUTER_KEY:-}" ]] && export OPENROUTER_KEY="$OPENROUTER_API_KEY"
+[[ -n "${GEMINI_API_KEY:-}" && -z "${LLM_GEMINI_KEY:-}" ]] && export LLM_GEMINI_KEY="$GEMINI_API_KEY"
+EOF
+printf 'DEFAULT_MODEL=%q\n' "$MODEL" >>run_seed.sh
+cat >>run_seed.sh <<'EOF'
+exec ./seed.py -m "${SEED_MODEL:-$DEFAULT_MODEL}" "$@"
+EOF
 chmod +x run_seed.sh
 
 printf 'Planting seed with %s...\n' "$MODEL"
