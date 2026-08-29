@@ -51,7 +51,9 @@ EOF
 # --- tty helpers (curl | bash leaves stdin as the script) ---
 
 have_tty() {
-  [[ -r /dev/tty && -w /dev/tty ]]
+  # The node can exist without a controlling terminal (CI, some test
+  # harnesses). A write is the reliable check; curl|bash still has one.
+  { : > /dev/tty; } 2>/dev/null
 }
 
 die() {
@@ -60,7 +62,11 @@ die() {
 }
 
 say() {
-  printf '%s\n' "$*"
+  # Never stdout: provider/key/dir are captured with $(...).
+  if { printf '%s\n' "$*" > /dev/tty; } 2>/dev/null; then
+    return
+  fi
+  printf '%s\n' "$*" >&2
 }
 
 prompt_line() {
@@ -460,13 +466,6 @@ main() {
 
   say "seed — pick a model, store a key, then start talking"
   provider=$(choose_provider "$yes" "$provider")
-  if [[ -z "$model" ]]; then
-    model=$(provider_field "$provider" model)
-    if [[ "$yes" != 1 ]] && have_tty; then
-      model=$(prompt_line "model" "$model")
-    fi
-  fi
-  [[ -n "$model" ]] || die "empty model id"
 
   local resolved_key=""
   resolved_key=$(resolve_key "$provider" "$key" "$yes")
@@ -478,6 +477,14 @@ main() {
   elif [[ "$provider" == "codex" ]]; then
     say "codex uses your ChatGPT login (run 'codex login' if this session fails)"
   fi
+
+  if [[ -z "$model" ]]; then
+    model=$(provider_field "$provider" model)
+    if [[ "$yes" != 1 ]] && have_tty; then
+      model=$(prompt_line "model" "$model")
+    fi
+  fi
+  [[ -n "$model" ]] || die "empty model id"
 
   local dest
   dest=$(pick_plant_dir "$plant_dir" "$yes")
