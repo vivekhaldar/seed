@@ -14,22 +14,29 @@ its `self/` directory.
 
 ```bash
 mkdir my-agent && cd my-agent
-uvx --from git+https://github.com/vivekhaldar/seed.git seed
+curl -fsSL https://raw.githubusercontent.com/vivekhaldar/seed/master/run_seed.sh | bash
 ```
 
-First run copies `seed.py` and `run_seed.sh` into this directory (never
-overwriting a file that already exists), germinates `self/SELF.md`, and
-commits those files together in a fresh git repo here — the loop is part of
-this individual's history, not only `self/`. Then it drops you into a REPL.
-Start talking. Everything the agent wants to keep must be written into
-`self/` — sessions are ephemeral and nothing else survives.
+The runner finds your model credentials — or, on a machine with none, asks
+you to pick a provider and paste an API key, which is verified before it's
+stored. Then the first run copies `seed.py` and `run_seed.sh` into this
+directory (never overwriting a file that already exists), germinates
+`self/SELF.md`, and commits those files together in a fresh git repo here —
+the loop is part of this individual's history, not only `self/`. Then it
+drops you into a REPL. Start talking. Everything the agent wants to keep
+must be written into `self/` — sessions are ephemeral and nothing else
+survives.
 
-Come back to the same agent with the local runner — no need to `uvx` again:
+Come back to the same agent with the local runner — no need to curl again:
 
 ```bash
 ./run_seed.sh
-./run_seed.sh -m gemini-2.5-pro
+./run_seed.sh -m gemini/gemini-3.7-flash
 ```
+
+(If you already have credentials configured,
+`uvx --from git+https://github.com/vivekhaldar/seed.git seed` still works;
+it plants a minimal runner without the model/key bootstrap.)
 
 A verbatim transcript of every session is recorded to `self/sessions/*.json`
 (updated after each turn). This is a flight recorder, not memory: the agent
