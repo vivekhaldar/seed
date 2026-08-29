@@ -41,15 +41,23 @@ agent, diverging based on what it experiences.
 
 ## Configuration
 
-Models and keys are handled entirely by [llm](https://llm.datasette.io/)
-(Simon Willison's library). The default model is `openai-codex/gpt-5.6-sol`,
-which uses the ChatGPT login from the Codex CLI:
+Models and keys are handled by [llm](https://llm.datasette.io/) (Simon
+Willison's library); `run_seed.sh` decides which model a session uses. On a
+machine with no credentials at all, the first run asks you to pick a provider
+and paste an API key — the key is checked with a one-word prompt, stored in
+`llm`'s key store, and the model choice is saved to `self/model`. After that,
+starting the agent asks nothing.
 
-```bash
-codex login                      # one-time, per machine
-./run_seed.sh                    # uses openai-codex/gpt-5.6-sol
-./run_seed.sh -m gemini-2.5-pro  # or override it for one session
-```
+Resolution order:
+
+1. `-m` flag — one session: `./run_seed.sh -m gemini/gemini-3.7-flash`
+2. `SEED_MODEL` env var — one session, handy for containers
+3. `self/model` — this individual's saved choice; edit or delete it to change
+4. found credentials — a Codex CLI login (`codex login`, uses
+   `openai-codex/gpt-5.6-sol`), or a provider key from the environment
+   (`OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`,
+   `OPENAI_API_KEY`) or from `llm keys set <provider>`
+5. none of the above — the first-run picker
 
 Bundled providers: OpenAI via a Codex subscription or API key, Anthropic,
 Gemini, and OpenRouter (one OpenRouter key unlocks hundreds of models).
