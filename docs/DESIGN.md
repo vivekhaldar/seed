@@ -158,16 +158,19 @@ alongside `self/`. Planting inside an existing repo still nests git in
 divergent individuals.
 
 **Loop reachability is a fact of deployment, not a prohibition.** A
-`curl | bash` setup selects a provider and model before invoking the seed,
-then writes that model (but no credential) into `run_seed.sh`. The first
-seed process still runs from uv's cache, but planting copies `seed.py` into
-the plant directory, alongside the configured runner, so the loop is a file
-the agent can see and may grow. Later sessions use `./run_seed.sh` and do not
-need `uvx`. Planting never overwrites an existing `seed.py` or `run_seed.sh`
-— a grown loop must not be clobbered by a later plant. That copy-over mode
-accepts the risk that the agent could brick the loop. Recovery is still
-human + git. Direct `uvx --from git+... seed -m MODEL` planting remains
-available for already-configured environments.
+`curl | bash` setup detects an unambiguous existing credential or asks for a
+provider and model before invoking the seed. It rejects models without tool
+support and, unless explicitly disabled, makes one minimal request to verify
+that the credential, account, and model work together. Only then does it
+write the model (but no credential) into `run_seed.sh`. The first seed process
+still runs from uv's cache, but planting copies `seed.py` into the plant
+directory, alongside the configured runner, so the loop is a file the agent
+can see and may grow. Later sessions use `./run_seed.sh` and do not need
+`uvx`. Planting never overwrites an existing `seed.py` or `run_seed.sh` — a
+grown loop must not be clobbered by a later plant. That copy-over mode accepts
+the risk that the agent could brick the loop. Recovery is still human + git.
+Direct `uvx --from git+... seed -m MODEL` planting remains available for
+already-configured environments.
 
 **Substrate: Simon Willison's `llm` library.** Chosen over the alternatives
 because it is almost exactly the required shape: multi-provider via plugins
@@ -180,9 +183,11 @@ abstraction is a polished *frozen* agent loop — precisely the thing being
 avoided), **raw OpenAI SDK + OpenRouter** (the purist null-library option;
 better story, worse engineering — flattens provider-native features and
 re-implements retries). Keys are handled entirely by the library and its
-providers. The setup stores keys in `llm`'s user-level key store and puts
-only the selected model in the individual's runner. The bare Python entry
-point retains the Codex-subscription-backed
+providers. A key pasted into setup is held only long enough for the live
+check, then stored in `llm`'s user-level key store; an injected environment
+key is used without being copied. Only the selected model enters the
+individual's runner and genesis commit. The bare Python entry point retains
+the Codex-subscription-backed
 `openai-codex/gpt-5.6-sol` default, while `seed -m MODEL` selects another
 model for a session. One consequence: the provider set is fixed by the
 seed's dependency list, since `llm install` doesn't persist under uvx —
