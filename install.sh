@@ -112,9 +112,13 @@ DETECTED_PROVIDERS=()
 add_detected_provider() {
     local candidate="$1"
     local detected
-    for detected in "${DETECTED_PROVIDERS[@]}"; do
-        [[ "$detected" == "$candidate" ]] && return
-    done
+    # Bash 3.2 (macOS /bin/bash) errors on "${array[@]}" when the array is
+    # empty and nounset is on: DETECTED_PROVIDERS[0]: unbound variable.
+    if ((${#DETECTED_PROVIDERS[@]})); then
+        for detected in "${DETECTED_PROVIDERS[@]}"; do
+            [[ "$detected" == "$candidate" ]] && return
+        done
+    fi
     DETECTED_PROVIDERS+=("$candidate")
 }
 
