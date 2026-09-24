@@ -277,8 +277,10 @@ if "$NO_VERIFY"; then
     printf 'Skipping live credential verification (--no-verify).\n'
 else
     printf 'Verifying credentials with one minimal model request...\n'
+    # llm prompt reads stdin and appends it to the prompt. Under curl | bash
+    # that stdin is the rest of this script, so the plant step never runs.
     if ! seed_llm prompt --no-log --model "$MODEL" \
-        "Reply with only OK." >/dev/null; then
+        "Reply with only OK." </dev/null >/dev/null; then
         die "live verification failed; check the key, account credit, and model access"
     fi
     printf 'Credentials and model verified.\n'
