@@ -4,6 +4,7 @@ set -euo pipefail
 SEED_UVX_FROM="${SEED_UVX_FROM:-git+https://github.com/vivekhaldar/seed.git}"
 PROVIDER=""
 MODEL=""
+OUTPUT_CAP=10000
 NO_RUN=false
 NO_VERIFY=false
 HAS_TTY=false
@@ -20,11 +21,12 @@ Plant and configure a seed agent in the current directory.
 
 Usage:
   curl -fsSL https://raw.githubusercontent.com/vivekhaldar/seed/master/install.sh | bash
-  curl -fsSL URL | bash -s -- [--provider NAME] [--model ID] [--no-run] [--no-verify]
+  curl -fsSL URL | bash -s -- [--provider NAME] [--model ID] [--output-cap N] [--no-run] [--no-verify]
 
 Options:
   --provider NAME  gemini, openrouter, openai, anthropic, codex, or custom
   --model ID       Override the provider's recommended model
+  --output-cap N   Max characters of an exec result returned to the model (default: 10000)
   --no-run         Plant the agent without starting an interactive session
   --no-verify      Skip the live credential and model check
   -h, --help       Show this help
@@ -41,6 +43,12 @@ while (($#)); do
         --model)
             (($# >= 2)) || die "--model requires a value"
             MODEL="$2"
+            shift 2
+            ;;
+        --output-cap)
+            (($# >= 2)) || die "--output-cap requires a value"
+            OUTPUT_CAP="$2"
+            [[ "$OUTPUT_CAP" =~ ^[1-9][0-9]*$ ]] || die "--output-cap must be a positive integer"
             shift 2
             ;;
         --no-run)
@@ -303,16 +311,17 @@ cd "$(dirname "$0")"
 [[ -n "${GEMINI_API_KEY:-}" && -z "${LLM_GEMINI_KEY:-}" ]] && export LLM_GEMINI_KEY="$GEMINI_API_KEY"
 EOF
 printf 'DEFAULT_MODEL=%q\n' "$MODEL" >>run_seed.sh
+printf 'PLANTED_OUTPUT_CAP=%q\n' "$OUTPUT_CAP" >>run_seed.sh
 cat >>run_seed.sh <<'EOF'
-exec ./seed.py -m "${SEED_MODEL:-$DEFAULT_MODEL}" "$@"
+exec ./seed.py --output-cap "${SEED_OUTPUT_CAP:-$PLANTED_OUTPUT_CAP}" -m "${SEED_MODEL:-$DEFAULT_MODEL}" "$@"
 EOF
 chmod +x run_seed.sh
 
-printf 'Planting seed with %s...\n' "$MODEL"
+printf 'Planting seed with %s (output cap %s)...\n' "$MODEL" "$OUTPUT_CAP"
 if "$NO_RUN"; then
-    uvx --quiet --from "$SEED_UVX_FROM" seed -m "$MODEL" </dev/null
+    uvx --quiet --from "$SEED_UVX_FROM" seed --output-cap "$OUTPUT_CAP" -m "$MODEL" </dev/null
     printf 'Ready. Start it with ./run_seed.sh\n'
 else
     require_tty
-    exec uvx --quiet --from "$SEED_UVX_FROM" seed -m "$MODEL" <&3
+    exec uvx --quiet --from "$SEED_UVX_FROM" seed --output-cap "$OUTPUT_CAP" -m "$MODEL" <&3
 fi

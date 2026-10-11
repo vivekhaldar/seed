@@ -23,6 +23,7 @@ Design: docs/DESIGN.md in the seed repo.
 import argparse
 import datetime
 import json
+import os
 import pathlib
 import subprocess
 
@@ -31,7 +32,8 @@ import llm
 SELF_DIR = pathlib.Path.cwd() / "self"
 SELF_MD = SELF_DIR / "SELF.md"
 SESSIONS_DIR = SELF_DIR / "sessions"
-OUTPUT_CAP = 10_000
+DEFAULT_OUTPUT_CAP = 10_000
+OUTPUT_CAP = DEFAULT_OUTPUT_CAP
 DEFAULT_MODEL = "openai-codex/gpt-5.6-sol"
 
 GENESIS = """\
@@ -46,14 +48,26 @@ Before I start, I look at what this file already points to. Before I finish, I w
 What I know so far: nothing. I was just planted.
 """
 
-# Kept identical to the checked-in run_seed.sh. uvx installs only the
-# `seed` module (py-modules = ["seed"]), so a plant from cache embeds this.
-RUN_SEED_SH = """\
-#!/usr/bin/env bash
-set -euo pipefail
-cd "$(dirname "$0")"
-exec ./seed.py "$@"
-"""
+def positive_int(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("must be a positive integer") from error
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return parsed
+
+
+def render_run_seed_sh(output_cap: int) -> str:
+    """Runner written when a seed is planted. The cap is fixed at that moment."""
+    return (
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n"
+        'cd "$(dirname "$0")"\n'
+        "# Chosen when this seed was planted. SEED_OUTPUT_CAP overrides one session.\n"
+        f"PLANTED_OUTPUT_CAP={output_cap}\n"
+        'exec ./seed.py --output-cap "${SEED_OUTPUT_CAP:-$PLANTED_OUTPUT_CAP}" "$@"\n'
+    )
 
 
 def execute(command: str) -> str:
@@ -122,7 +136,7 @@ def germinate() -> None:
     print(f"germinated: {', '.join(tracked)} (commit: genesis)")
 
 
-def plant() -> None:
+def plant(output_cap: int) -> None:
     """Leave a visible copy of the loop and a local runner in cwd."""
     running = pathlib.Path(__file__).resolve()
     cwd = pathlib.Path.cwd()
@@ -136,14 +150,12 @@ def plant() -> None:
 
     dest_runner = cwd / "run_seed.sh"
     if not dest_runner.exists():
-        sibling = running.parent / "run_seed.sh"
-        text = sibling.read_text() if sibling.is_file() else RUN_SEED_SH
-        dest_runner.write_text(text)
+        dest_runner.write_text(render_run_seed_sh(output_cap))
         dest_runner.chmod(dest_runner.stat().st_mode | 0o111)
         planted.append("run_seed.sh")
 
     if planted:
-        print(f"planted: {', '.join(planted)}")
+        print(f"planted: {', '.join(planted)} (output cap {output_cap})")
 
 
 def main() -> None:
@@ -156,9 +168,27 @@ def main() -> None:
         default=DEFAULT_MODEL,
         help=f"llm model id (default: {DEFAULT_MODEL})",
     )
+    parser.add_argument(
+        "--output-cap",
+        type=positive_int,
+        default=None,
+        help=(
+            "Maximum characters of an exec result returned to the model "
+            f"(default: {DEFAULT_OUTPUT_CAP}, or SEED_OUTPUT_CAP). "
+            "Recorded in run_seed.sh when that runner is created."
+        ),
+    )
     args = parser.parse_args()
 
-    plant()
+    output_cap = args.output_cap
+    if output_cap is None and os.environ.get("SEED_OUTPUT_CAP"):
+        output_cap = positive_int(os.environ["SEED_OUTPUT_CAP"])
+    if output_cap is None:
+        output_cap = DEFAULT_OUTPUT_CAP
+    global OUTPUT_CAP
+    OUTPUT_CAP = output_cap
+
+    plant(output_cap)
     germinate()
     model = llm.get_model(args.model)
     conversation = model.conversation(tools=[execute])

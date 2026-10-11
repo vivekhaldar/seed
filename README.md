@@ -39,6 +39,15 @@ SEED_MODEL=claude-sonnet-5 ./run_seed.sh  # override for one session
 ./run_seed.sh -m gpt-5.6-sol              # equivalent explicit override
 ```
 
+`exec` returns at most 10,000 characters to the model unless a different cap
+is chosen when the seed is planted. That number is written into `run_seed.sh`
+as `PLANTED_OUTPUT_CAP`. `SEED_OUTPUT_CAP` overrides it for one session.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/vivekhaldar/seed/master/install.sh |
+  bash -s -- --provider gemini --output-cap 10000000 --no-run
+```
+
 A verbatim transcript of every session is recorded to `self/sessions/*.json`
 (updated after each turn). This is a flight recorder, not memory: the agent
 never loads it at boot, but you can read it — and the agent may grow tools to
@@ -73,7 +82,7 @@ For unattended setup, pass the provider and optionally a model:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/vivekhaldar/seed/master/install.sh |
-  bash -s -- --provider gemini --model gemini-flash-latest --no-run
+  bash -s -- --provider gemini --model gemini-flash-latest --output-cap 10000 --no-run
 ```
 
 The matching credential must already be available in the environment or
